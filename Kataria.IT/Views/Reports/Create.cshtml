@@ -1,0 +1,99 @@
+@model NewReportVm
+@{
+    ViewData["Title"] = "New Daily Report";
+    string[] statuses = ["Not Checked", "OK", "Issue", "N/A"];
+}
+<div class="mb-3"><div class="eyebrow">DAILY REPORT</div><h1 class="h3 fw-bold">Nayi Daily Report</h1>
+<p class="text-secondary mb-0">Report SQL Server mein save hogi, Excel ban kar aur saari photos Google Drive folder mein upload hongi.</p></div>
+
+<form id="reportForm" asp-action="Create" method="post" enctype="multipart/form-data" novalidate>
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+    <div class="panel">
+        <h2>Report information</h2>
+        <div class="row g-3">
+            <div class="col-md-3"><label class="form-label">Report date</label><input asp-for="ReportDate" type="date" class="form-control" required /></div>
+            <div class="col-md-3"><label class="form-label">Prepared by</label><input asp-for="PreparedBy" class="form-control" required /></div>
+            <div class="col-md-3"><label class="form-label">Reviewed by</label><input asp-for="ReviewedBy" class="form-control" placeholder="Manager / supervisor" /></div>
+            <div class="col-md-3"><label class="form-label">Shift</label>
+                <select asp-for="Shift" class="form-select"><option>Daily inspection</option><option>Morning</option><option>Evening</option><option>Night</option></select></div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="h5 mb-0">Servers</h2>
+        <button type="button" class="btn btn-sm btn-outline-success" id="allOk"><i class="bi bi-check2-all"></i> Sab servers ke sab checks OK karein</button>
+    </div>
+
+    @for (int i = 0; i < Model.ServerList.Count; i++)
+    {
+        var s = Model.ServerList[i];
+        <article class="server-card" data-server>
+            <div class="server-head d-flex justify-content-between flex-wrap gap-2">
+                <div><b>@s.Name · @s.IpAddress</b><div class="small opacity-75">@s.Role · @s.Location</div></div>
+                <button type="button" class="btn btn-sm btn-light set-ok">Sab OK</button>
+            </div>
+            <div class="server-body">
+                <input type="hidden" name="Servers[@i].ServerId" value="@s.ServerId" />
+                <div class="row g-3">
+                    @foreach (var c in Model.CheckItems)
+                    {
+                        <div class="col-6 col-lg-3">
+                            <label class="form-label">@c.Label</label>
+                            <select class="form-select check-select" name="Servers[@i].Checks[@c.Code]">
+                                @foreach (var st in statuses) { <option>@st</option> }
+                            </select>
+                        </div>
+                    }
+                    <div class="col-lg-7"><label class="form-label">Issue / observation / action taken</label>
+                        <textarea name="Servers[@i].Notes" class="form-control" rows="2"></textarea></div>
+                    <div class="col-lg-5"><label class="form-label">@s.Name ki photos</label>
+                        <input type="file" name="Servers[@i].Photos" class="form-control photo-input" accept="image/*" multiple />
+                        <div class="thumbs"></div></div>
+                </div>
+            </div>
+        </article>
+    }
+
+    <div class="panel">
+        <h2>Internet &amp; UPS</h2>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Internet / network status</label>
+                <select asp-for="InternetStatus" class="form-select mb-2">@foreach (var st in statuses) { <option>@st</option> }</select>
+                <label class="form-label">Internet photos</label>
+                <input type="file" name="InternetPhotos" class="form-control photo-input" accept="image/*" multiple />
+                <div class="thumbs"></div>
+                <label class="form-label mt-2">Connectivity notes</label>
+                <textarea asp-for="InternetNotes" class="form-control" rows="2"></textarea>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">UPS / electricity status</label>
+                <select asp-for="UpsStatus" class="form-select mb-2">@foreach (var st in statuses) { <option>@st</option> }</select>
+                <label class="form-label">UPS photos</label>
+                <input type="file" name="UpsPhotos" class="form-control photo-input" accept="image/*" multiple />
+                <div class="thumbs"></div>
+                <label class="form-label mt-2">UPS / power notes</label>
+                <textarea asp-for="UpsNotes" class="form-control" rows="2"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>Overall observations</h2>
+        <div class="row g-3">
+            <div class="col-md-4"><label class="form-label">Server room condition</label>
+                <select asp-for="RoomCondition" class="form-select"><option>Not Checked</option><option>Normal</option><option>Attention Required</option><option>Critical</option></select></div>
+            <div class="col-md-4"><label class="form-label">Manager notification</label>
+                <select asp-for="ManagerNotification" class="form-select"><option>No</option><option>Yes – informed</option><option>Pending</option></select></div>
+            <div class="col-12"><label class="form-label">Summary / action taken / follow-up</label><textarea asp-for="Summary" class="form-control" rows="3"></textarea></div>
+        </div>
+    </div>
+
+    <div id="saveMessage" class="mb-3"></div>
+    <div class="text-end mb-5">
+        <button id="saveBtn" class="btn btn-primary btn-lg px-4"><i class="bi bi-cloud-arrow-up"></i> Save &amp; Upload to Drive</button>
+    </div>
+</form>
+
+@section Scripts { <script src="~/js/report-form.js" asp-append-version="true"></script> }

@@ -1,0 +1,54 @@
+@model DashboardVm
+@{ ViewData["Title"] = "Dashboard"; }
+<div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mb-4">
+    <div><div class="eyebrow">INFRASTRUCTURE OPERATIONS</div><h1 class="h3 fw-bold mb-0">Daily Server Monitoring</h1></div>
+    <a class="btn btn-primary" asp-controller="Reports" asp-action="Create"><i class="bi bi-plus-circle"></i> Generate Today's Report</a>
+</div>
+
+@if (Model.TodayReport is null)
+{
+    <div class="alert alert-warning d-flex align-items-center gap-2"><i class="bi bi-exclamation-circle fs-4"></i><div>Aaj (@DateTime.Today.ToString("dd MMM yyyy")) ki report abhi save nahi hui.</div></div>
+}
+else
+{
+    <div class="alert alert-success d-flex align-items-center gap-2"><i class="bi bi-check-circle fs-4"></i>
+        <div>
+            Today's report has been successfully saved in the system  <partial name="_Badge" model="Model.TodayReport.OverallStatus" /> · Drive Status: <partial name="_Badge" model="Model.TodayReport.DriveSyncStatus" />
+            <a class="ms-2" asp-controller="Reports" asp-action="Details" asp-route-id="@Model.TodayReport.ReportId">Preview</a>
+        </div>
+    </div>
+}
+@if (!Model.DriveConnected && User.IsInRole("Admin"))
+{
+    <div class="alert alert-info">Google Drive is not connected. Reports cannot be uploaded to Google Drive at this time <a asp-controller="Drive" asp-action="Index">Ab connect karein</a>.</div>
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3"><div class="metric"><small>Servers monitored</small><strong>@Model.ServerCount</strong></div></div>
+    <div class="col-6 col-lg-3"><div class="metric"><small>Saved reports</small><strong>@Model.TotalReports</strong></div></div>
+    <div class="col-6 col-lg-3"><div class="metric"><small>Photos uploaded</small><strong>@Model.TotalPhotos</strong></div></div>
+    <div class="col-6 col-lg-3"><div class="metric"><small>Issue reports (30 din)</small><strong class="@(Model.IssueReportsLast30 > 0 ? "text-danger" : "")">@Model.IssueReportsLast30</strong></div></div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-white fw-semibold">Recent reports</div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead><tr><th>Date</th><th>Prepared by</th><th>Status</th><th>Photos</th><th>Google Drive</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var r in Model.Recent)
+            {
+                <tr>
+                    <td class="fw-semibold">@r.ReportDate.ToString("dd MMM yyyy")<div class="small text-secondary">@r.Shift</div></td>
+                    <td>@r.PreparedByName</td>
+                    <td><partial name="_Badge" model="r.OverallStatus" /></td>
+                    <td>@r.EvidenceFiles.Count</td>
+                    <td><partial name="_Badge" model="r.DriveSyncStatus" /></td>
+                    <td class="text-end"><a class="btn btn-sm btn-outline-primary" asp-controller="Reports" asp-action="Details" asp-route-id="@r.ReportId">View</a></td>
+                </tr>
+            }
+            @if (!Model.Recent.Any()) { <tr><td colspan="6" class="text-center text-secondary py-4">Abhi tak koi report nahi.</td></tr> }
+            </tbody>
+        </table>
+    </div>
+</div>

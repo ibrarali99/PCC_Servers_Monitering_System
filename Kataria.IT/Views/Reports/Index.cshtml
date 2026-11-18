@@ -1,0 +1,42 @@
+@model ReportFilterVm
+@{ ViewData["Title"] = "Report History"; }
+<div class="mb-3"><div class="eyebrow">HISTORY</div><h1 class="h3 fw-bold">Date-wise Reports</h1></div>
+
+<form method="get" class="panel">
+    <div class="row g-3 align-items-end">
+        <div class="col-6 col-md-2"><label class="form-label">Ek date</label><input asp-for="Date" type="date" class="form-control" /></div>
+        <div class="col-6 col-md-2"><label class="form-label">From</label><input asp-for="From" type="date" class="form-control" /></div>
+        <div class="col-6 col-md-2"><label class="form-label">To</label><input asp-for="To" type="date" class="form-control" /></div>
+        <div class="col-6 col-md-2"><label class="form-label">Server</label>
+            <select asp-for="ServerId" class="form-select"><option value="">Sab</option>@foreach (var s in Model.Servers) { <option value="@s.ServerId" selected="@(Model.ServerId == s.ServerId)">@s.Name</option> }</select></div>
+        <div class="col-6 col-md-2"><label class="form-label">Status</label>
+            <select asp-for="Status" class="form-select"><option value="">Sab</option><option>OK</option><option>Attention Required</option></select></div>
+        <div class="col-6 col-md-2 d-flex gap-2"><button class="btn btn-primary flex-fill">Search</button><a class="btn btn-outline-secondary" asp-action="Index">Reset</a></div>
+    </div>
+</form>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead><tr><th>Date</th><th>Prepared by</th><th>Status</th><th>Photos</th><th>Google Drive</th><th class="text-end">Actions</th></tr></thead>
+            <tbody>
+            @foreach (var r in Model.Results)
+            {
+                <tr>
+                    <td class="fw-semibold">@r.ReportDate.ToString("dd MMM yyyy")<div class="small text-secondary">@r.Shift</div></td>
+                    <td>@r.PreparedByName</td>
+                    <td><partial name="_Badge" model="r.OverallStatus" /></td>
+                    <td>@r.EvidenceFiles.Count</td>
+                    <td><partial name="_Badge" model="r.DriveSyncStatus" /></td>
+                    <td class="text-end text-nowrap">
+                        <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@r.ReportId">View</a>
+                        <a class="btn btn-sm btn-outline-success" asp-action="Excel" asp-route-id="@r.ReportId"><i class="bi bi-file-earmark-excel"></i></a>
+                        @if (!string.IsNullOrEmpty(r.DriveFolderLink)) { <a class="btn btn-sm btn-outline-secondary" href="@r.DriveFolderLink" target="_blank" rel="noopener"><i class="bi bi-folder2-open"></i></a> }
+                    </td>
+                </tr>
+            }
+            @if (!Model.Results.Any()) { <tr><td colspan="6" class="text-center text-secondary py-4">In filters par koi report nahi mili.</td></tr> }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,76 @@
+@model DailyReport
+@{
+    ViewData["Title"] = "Report " + Model.ReportDate.ToString("dd MMM yyyy");
+    var entries = Model.ServerEntries.OrderBy(e => e.Server.SortOrder).ToList();
+    EvidenceFile[] Photos(string cat, int? sid = null) => Model.EvidenceFiles.Where(e => e.Category == cat && e.ServerId == sid).OrderBy(e => e.EvidenceId).ToArray();
+}
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3 no-print">
+    <div><div class="eyebrow">REPORT #@Model.ReportId</div><h1 class="h3 fw-bold mb-0">@Model.ReportDate.ToString("dddd, dd MMMM yyyy")</h1></div>
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-outline-success" asp-action="Excel" asp-route-id="@Model.ReportId"><i class="bi bi-file-earmark-excel"></i> Excel download</a>
+        <button class="btn btn-outline-primary" onclick="window.print()"><i class="bi bi-printer"></i> Print</button>
+        @if (User.IsInRole("Admin"))
+        {
+            <form asp-action="Delete" asp-route-id="@Model.ReportId" method="post" onsubmit="return confirm('Yeh report delete karni hai?');"><button class="btn btn-outline-danger"><i class="bi bi-trash"></i> Delete</button></form>
+        }
+    </div>
+</div>
+
+<div class="print-title d-none"><h2>KATARIA DISTRIBUTION CENTER</h2><div>Daily Server Monitoring &amp; Status Report</div></div>
+
+<div class="panel">
+    <div class="row g-3">
+        <div class="col-6 col-md-3"><small class="text-secondary d-block">Prepared by</small>@Model.PreparedByName</div>
+        <div class="col-6 col-md-3"><small class="text-secondary d-block">Reviewed by</small>@(Model.ReviewedBy ?? "—")</div>
+        <div class="col-6 col-md-3"><small class="text-secondary d-block">Shift</small>@Model.Shift</div>
+        <div class="col-6 col-md-3"><small class="text-secondary d-block">Overall</small><partial name="_Badge" model="Model.OverallStatus" /></div>
+        <div class="col-6 col-md-3"><small class="text-secondary d-block">Server room</small><partial name="_Badge" model="Model.RoomCondition" /></div>
+        <div class="col-6 col-md-3"><small class="text-secondary d-block">Manager notified</small>@Model.ManagerNotification</div>
+        <div class="col-6 col-md-3"><small class="text-secondary d-block">Saved at</small>@Model.CreatedAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm")</div>
+    </div>
+</div>
+
+<div class="panel no-print">
+    <h2>Google Drive</h2>
+    <div class="d-flex flex-wrap align-items-center gap-3">
+        <partial name="_Badge" model="Model.DriveSyncStatus" />
+        <span class="small text-secondary">@Model.DriveSyncMessage</span>
+        @if (!string.IsNullOrEmpty(Model.DriveFolderLink)) { <a href="@Model.DriveFolderLink" target="_blank" rel="noopener"><i class="bi bi-folder2-open"></i> Drive folder</a> }
+        @if (!string.IsNullOrEmpty(Model.DriveExcelLink)) { <a href="@Model.DriveExcelLink" target="_blank" rel="noopener"><i class="bi bi-file-earmark-excel"></i> Excel in Drive</a> }
+        @if (Model.DriveSyncStatus != "Uploaded")
+        {
+            <form asp-action="Resync" asp-route-id="@Model.ReportId" method="post" class="ms-auto"><button class="btn btn-sm btn-warning"><i class="bi bi-arrow-repeat"></i> Drive par dobara upload</button></form>
+        }
+    </div>
+</div>
+
+@foreach (var e in entries)
+{
+    <article class="server-card">
+        <div class="server-head"><b>@e.Server.Name · @e.Server.IpAddress</b><div class="small opacity-75">@e.Server.Role</div></div>
+        <div class="server-body">
+            <div class="row g-2 mb-2">
+                @foreach (var c in e.CheckResults.OrderBy(c => c.CheckItem.SortOrder))
+                {
+                    <div class="col-6 col-md-3"><small class="text-secondary d-block">@c.CheckItem.Label</small><partial name="_Badge" model="c.Status" /></div>
+                }
+            </div>
+            @if (!string.IsNullOrWhiteSpace(e.Notes)) { <p class="mb-2"><b>Notes:</b> @e.Notes</p> }
+            <div class="photo-grid">
+                @foreach (var p in Photos("Server", e.ServerId)) { <a href="@Url.Action("Evidence", new { id = p.EvidenceId })" target="_blank"><img loading="lazy" src="@Url.Action("Evidence", new { id = p.EvidenceId })" alt="@p.OriginalName" /></a> }
+            </div>
+        </div>
+    </article>
+}
+
+<div class="panel">
+    <h2>Internet</h2>
+    <p class="mb-2"><partial name="_Badge" model="Model.InternetStatus" /> @Model.InternetNotes</p>
+    <div class="photo-grid">@foreach (var p in Photos("Internet")) { <a href="@Url.Action("Evidence", new { id = p.EvidenceId })" target="_blank"><img loading="lazy" src="@Url.Action("Evidence", new { id = p.EvidenceId })" alt="" /></a> }</div>
+</div>
+<div class="panel">
+    <h2>UPS / Electricity</h2>
+    <p class="mb-2"><partial name="_Badge" model="Model.UpsStatus" /> @Model.UpsNotes</p>
+    <div class="photo-grid">@foreach (var p in Photos("Ups")) { <a href="@Url.Action("Evidence", new { id = p.EvidenceId })" target="_blank"><img loading="lazy" src="@Url.Action("Evidence", new { id = p.EvidenceId })" alt="" /></a> }</div>
+</div>
+<div class="panel"><h2>Summary / action taken</h2><p class="mb-0" style="white-space:pre-line">@(Model.Summary ?? "—")</p></div>

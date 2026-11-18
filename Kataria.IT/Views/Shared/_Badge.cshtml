@@ -1,0 +1,14 @@
+@model string?
+@{
+    var v = Model ?? "Not Checked";
+    var cls = v switch
+    {
+        "OK" or "Normal" or "Uploaded" => "success",
+        "Issue" or "Critical" or "Attention Required" or "Failed" => "danger",
+        "Partial" => "warning",
+        "N/A" or "NotConfigured" => "secondary",
+        _ => "warning"
+    };
+    var text = v == "NotConfigured" ? "Drive not connected" : v;
+}
+<span class="badge text-bg-@cls">@text</span>

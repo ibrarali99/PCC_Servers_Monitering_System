@@ -1,0 +1,51 @@
+@model DriveSettingsVm
+@{ ViewData["Title"] = "Google Drive"; }
+<div class="mb-3"><div class="eyebrow">ADMIN</div><h1 class="h3 fw-bold">Google Drive</h1></div>
+
+<div class="panel">
+    <h2>Status</h2>
+    @if (Model.Connected && Model.HasClientCredentials)
+    {
+        <p><span class="badge text-bg-success">Connected</span> Account: <b>@(Model.AccountEmail ?? "—")</b></p>
+        <p class="small text-secondary mb-3">Root folder ID: <code>@Model.RootFolderId</code> – har din ka sub-folder (yyyy-MM-dd) is mein ban kar Excel + photos upload hoti hain.</p>
+        <div class="d-flex gap-2">
+            <form asp-action="Test" method="post"><button class="btn btn-outline-primary">Folder test karein</button></form>
+            <form asp-action="Disconnect" method="post" onsubmit="return confirm('Disconnect karna hai?');"><button class="btn btn-outline-danger">Disconnect</button></form>
+        </div>
+    }
+    else
+    {
+        <p><span class="badge text-bg-warning">Not connected</span> Reports SQL Server mein save hoti hain magar Drive par upload nahi hoti.</p>
+    }
+</div>
+
+<div class="panel">
+    <h2>1) Google Cloud OAuth credentials</h2>
+    <ol class="small text-secondary">
+        <li><a href="https://console.cloud.google.com/" target="_blank" rel="noopener">Google Cloud Console</a> par <b>ibrarali.pcc@gmail.com</b> se login karke project banayein → <b>Google Drive API</b> enable karein.</li>
+        <li>APIs &amp; Services → OAuth consent screen: External, app name "Kataria IT". Publishing status ko <b>In production</b> kar dein (warna token 7 din mein expire ho jata hai).</li>
+        <li>Credentials → Create credentials → <b>OAuth client ID</b> → type <b>Web application</b>.</li>
+        <li>"Authorized redirect URIs" mein yeh exact URL add karein: <code>@Model.RedirectUri</code></li>
+        <li>Client ID aur Client Secret neeche paste karke Save karein.</li>
+    </ol>
+    <form asp-action="Save" method="post" class="row g-3">
+        <div class="col-md-6"><label class="form-label">Client ID</label><input asp-for="ClientId" class="form-control" autocomplete="off" /></div>
+        <div class="col-md-6">
+            <label class="form-label">
+                Client Secret @(Model.HasClientCredentials ? "(Saved – leave blank to keep the existing secret)" : "")
+            </label>
+            <input asp-for="ClientSecret"
+                   type="password"
+                   class="form-control"
+                   autocomplete="new-password"
+                   placeholder="Enter new client secret" />
+        </div>        <div class="col-12"><label class="form-label">Drive folder ID</label><input asp-for="RootFolderId" class="form-control" /></div>
+        <div class="col-12"><button class="btn btn-primary">Save</button></div>
+    </form>
+</div>
+
+<div class="panel">
+    <h2>2) Connect</h2>
+    <p class="small text-secondary">Yeh button server wali machine par <code>https://localhost:PORT</code> se dabayein (Google private IP/LAN naam ko redirect URL ke taur par qabool nahi karta). Sirf ek baar connect karna hota hai – token database mein encrypted save hota hai aur saray users ki reports usi se upload hoti hain.</p>
+    <form asp-action="Connect" method="post"><button class="btn btn-success" disabled="@(!Model.HasClientCredentials)"><i class="bi bi-google"></i> Connect Google Drive</button></form>
+</div>

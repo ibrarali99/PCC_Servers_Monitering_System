@@ -1,0 +1,25 @@
+@model LoginVm
+@{ ViewData["Title"] = "Login"; }
+<div class="login-wrap">
+    <div class="card login-card shadow-sm">
+        <div class="card-body p-4">
+            <div class="text-center mb-4">
+                <i class="bi bi-shield-lock display-5 text-primary"></i>
+                <h1 class="h4 fw-bold mt-2">IT Monitoring Portal</h1>
+                <p class="text-secondary small mb-0">Kataria Distribution Center</p>
+            </div>
+            <form asp-action="Login" method="post">
+                <input type="hidden" asp-for="ReturnUrl" />
+                <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+                <label asp-for="Username" class="form-label">Username</label>
+                <input asp-for="Username" class="form-control mb-1" autocomplete="username" autofocus />
+                <span asp-validation-for="Username" class="text-danger small"></span>
+                <label asp-for="Password" class="form-label mt-3">Password</label>
+                <input asp-for="Password" type="password" class="form-control mb-1" autocomplete="current-password" />
+                <span asp-validation-for="Password" class="text-danger small"></span>
+                <div class="form-check my-3"><input asp-for="RememberMe" class="form-check-input" /><label asp-for="RememberMe" class="form-check-label">Remember me</label></div>
+                <button class="btn btn-primary w-100">Sign in</button>
+            </form>
+        </div>
+    </div>
+</div>
